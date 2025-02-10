@@ -1,5 +1,12 @@
 package com.github.kittinunf.forge.util
 
+fun <A, X> Function1<A, X>.curry(): (A) -> X {
+    return { a -> invoke(a) }
+}
+
+val <A, X> Function1<A, X>.create: (A) -> (X)
+    get() = curry()
+
 fun <A, B, X> Function2<A, B, X>.curry(): (A) -> (B) -> X {
     return { a ->
         { b -> invoke(a, b) }
@@ -47,7 +54,6 @@ fun <A, B, C, D, E, X> Function5<A, B, C, D, E, X>.curry(): (A) -> (B) -> (C) ->
 
 val <A, B, C, D, E, X> Function5<A, B, C, D, E, X>.create: (A) -> (B) -> (C) -> (D) -> (E) -> X
     get() = curry()
-
 
 fun <A, B, C, D, E, F, X> Function6<A, B, C, D, E, F, X>.curry(): (A) -> (B) -> (C) -> (D) -> (E) -> (F) -> X {
     return { a ->
@@ -220,4 +226,72 @@ fun <A, B, C, D, E, F, G, H, I, J, K, L, X> Function12<A, B, C, D, E, F, G, H, I
 }
 
 val <A, B, C, D, E, F, G, H, I, J, K, L, X> Function12<A, B, C, D, E, F, G, H, I, J, K, L, X>.create: (A) -> (B) -> (C) -> (D) -> (E) -> (F) -> (G) -> (H) -> (I) -> (J) -> (K) -> (L) -> X
+    get() = curry()
+
+fun <A, B, C, D, E, F, G, H, I, J, K, L, M, X> Function13<A, B, C, D, E, F, G, H, I, J, K, L, M, X>.curry(): (A) -> (B) -> (C) -> (D) -> (E) -> (F) -> (G) -> (H) -> (I) -> (J) -> (K) -> (L) -> (M) -> X {
+    return { a ->
+        { b ->
+            { c ->
+                { d ->
+                    { e ->
+                        { f ->
+                            { g ->
+                                { h ->
+                                    { i ->
+                                        { j ->
+                                            { k ->
+                                                { l ->
+                                                    { m ->
+                                                        invoke(a, b, c, d, e, f, g, h, i, j, k, l, m)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+val <A, B, C, D, E, F, G, H, I, J, K, L, M, X> Function13<A, B, C, D, E, F, G, H, I, J, K, L, M, X>.create: (A) -> (B) -> (C) -> (D) -> (E) -> (F) -> (G) -> (H) -> (I) -> (J) -> (K) -> (L) -> (M) -> X
+    get() = curry()
+
+fun <A, B, C, D, E, F, G, H, I, J, K, L, M, N, X> Function14<A, B, C, D, E, F, G, H, I, J, K, L, M, N, X>.curry(): (A) -> (B) -> (C) -> (D) -> (E) -> (F) -> (G) -> (H) -> (I) -> (J) -> (K) -> (L) -> (M) -> (N) -> X {
+    return { a ->
+        { b ->
+            { c ->
+                { d ->
+                    { e ->
+                        { f ->
+                            { g ->
+                                { h ->
+                                    { i ->
+                                        { j ->
+                                            { k ->
+                                                { l ->
+                                                    { m ->
+                                                        { n ->
+                                                            invoke(a, b, c, d, e, f, g, h, i, j, k, l, m, n)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+val <A, B, C, D, E, F, G, H, I, J, K, L, M, N, X> Function14<A, B, C, D, E, F, G, H, I, J, K, L, M, N, X>.create: (A) -> (B) -> (C) -> (D) -> (E) -> (F) -> (G) -> (H) -> (I) -> (J) -> (K) -> (L) -> (M) -> (N) -> X
     get() = curry()

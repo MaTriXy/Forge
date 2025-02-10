@@ -8,8 +8,8 @@ import com.github.kittinunf.forge.core.at
 import com.github.kittinunf.forge.core.list
 import com.github.kittinunf.forge.core.map
 import com.github.kittinunf.forge.core.maybeAt
-import com.github.kittinunf.forge.helper.deserializeDate
-import com.github.kittinunf.forge.helper.toDate
+import com.github.kittinunf.forge.deserializer.deserializeDate
+import com.github.kittinunf.forge.deserializer.toDate
 import com.github.kittinunf.forge.model.Company
 import com.github.kittinunf.forge.model.Friend
 import com.github.kittinunf.forge.model.Friend.Address
@@ -20,21 +20,20 @@ import com.github.kittinunf.forge.model.UserWithCompany
 import com.github.kittinunf.forge.model.UserWithFriends
 import com.github.kittinunf.forge.model.UserWithOptionalFields
 import com.github.kittinunf.forge.util.create
-import com.github.kittinunf.forge.util.curry
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
-import java.util.*
+import java.util.Calendar
 
 class JSONMappingObjectTest : BaseTest() {
 
     class SimpleUserDeserializer : Deserializable<SimpleUser> {
         override fun deserialize(json: JSON): DeserializedResult<SimpleUser> =
-                ::SimpleUser.create.
-                        map(json at "id").
-                        apply(json at "name")
+            ::SimpleUser.create
+                .map(json at "id")
+                .apply(json at "name")
     }
 
     @Test
@@ -49,23 +48,14 @@ class JSONMappingObjectTest : BaseTest() {
 
     class UserDeserializer : Deserializable<User> {
         override fun deserialize(json: JSON): DeserializedResult<User> =
-                ::User.create.
-                        map(json at "id").
-                        apply(json at "username").
-                        apply(json at "name").
-                        apply(json at "age").
-                        apply(json at "email")
-    }
-
-    @Test
-    fun testUserModelInModelDeserializing() {
-        val result = Forge.modelFromJson(userJson, UserDeserializer())
-        val user: User = result.get()
-
-        assertThat(user.id, equalTo(1))
-        assertThat(user.name, equalTo("Clementina DuBuque"))
-        assertThat(user.age, equalTo(46))
-        assertThat(user.email, equalTo("Rey.Padberg@karina.biz"))
+            ::User.create
+                .map(json at "id")
+                .apply(json at "username")
+                .apply(json at "name")
+                .apply(json at "age")
+                .apply(json at "email")
+                .apply(json list "levels")
+                .apply(json.at("friend", FriendDeserializer()::deserialize))
     }
 
     @Test
@@ -77,21 +67,33 @@ class JSONMappingObjectTest : BaseTest() {
         assertThat(user.name, equalTo("Clementina DuBuque"))
         assertThat(user.age, equalTo(46))
         assertThat(user.email, equalTo("Rey.Padberg@karina.biz"))
+        assertThat(user.levels, equalTo(listOf(1, 2, 3, 4, 5)))
+    }
+
+    @Test
+    fun testUserModelInUserModelDeserializing() {
+        val result = Forge.modelFromJson(userJson, UserDeserializer())
+        val user = result.get().friend!!
+
+        assertThat(user.id, equalTo(2))
+        assertThat(user.name, equalTo("Tabitha Duran"))
+        assertThat(user.address.street, equalTo("Pulaski Street"))
+        assertThat(user.address.suite, equalTo("Fredericktown 8234"))
+        assertThat(user.address.city, equalTo("South Carolina"))
     }
 
     val companyDeserializer = { json: JSON ->
-        ::Company.create.
-                map(json at "name").
-                apply(json at "catch_phrase")
+        ::Company.create
+            .map(json at "name")
+            .apply(json at "catch_phrase")
     }
 
-
     val userModelWithCompanyDeserializer = { json: JSON ->
-        ::UserWithCompany.create.
-                map(json at "id").
-                apply(json at "username").
-                apply(json at "is_deleted").
-                apply(json.at("company", companyDeserializer))
+        ::UserWithCompany.create
+            .map(json at "id")
+            .apply(json at "username")
+            .apply(json at "is_deleted")
+            .apply(json.at("company", companyDeserializer))
     }
 
     @Test
@@ -106,21 +108,20 @@ class JSONMappingObjectTest : BaseTest() {
         assertThat(user.company.catchPhrase, equalTo("Centralized empowering task-force"))
     }
 
-
     class UserCreatedAt1Deserializer : Deserializable<UserCreatedAt> {
 
         override fun deserialize(json: JSON): DeserializedResult<UserCreatedAt> =
-                ::UserCreatedAt.create.
-                        map(json at "id").
-                        apply(json.at("created_at", ::deserializeDate.curry()("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")))
+            ::UserCreatedAt.create
+                .map(json at "id")
+                .apply(json.at("created_at", deserializer = { deserializeDate("created_at") }))
     }
 
     class UserCreatedAt2Deserializer : Deserializable<UserCreatedAt> {
 
         override fun deserialize(json: JSON): DeserializedResult<UserCreatedAt> =
-                ::UserCreatedAt.create.
-                        map(json at "id").
-                        apply(toDate() map (json at "created_at"))
+            ::UserCreatedAt.create
+                .map(json at "id")
+                .apply(toDate() map (json at "created_at"))
     }
 
     @Test
@@ -167,60 +168,57 @@ class JSONMappingObjectTest : BaseTest() {
     class UserWithOptionalFieldsDeserializer : Deserializable<UserWithOptionalFields> {
 
         override fun deserialize(json: JSON): DeserializedResult<UserWithOptionalFields> =
-                ::UserWithOptionalFields.create.
-                        map(json at "name").
-                        apply(json maybeAt "city").
-                        apply(json maybeAt "gender").
-                        apply(json at "phone").
-                        apply(json at "weight")
-
+            ::UserWithOptionalFields.create
+                .map(json at "name")
+                .apply(json maybeAt "city")
+                .apply(json maybeAt "gender")
+                .apply(json at "phone")
+                .apply(json at "weight")
     }
 
     @Test
     fun testUserModelWithOptionalFieldsDeserializing() {
         val result = Forge.modelFromJson(userJson, UserWithOptionalFieldsDeserializer())
-        val user = result.get<UserWithOptionalFields>()
+        val user = result.get()
 
         assertThat(user.name, equalTo("Clementina DuBuque"))
         assertThat(user.city, nullValue())
         assertThat(user.gender, nullValue())
         assertThat(user.phone, equalTo("024-648-3804"))
-        assertThat(user.weight, equalTo(72.5f))
+        assertThat(user.weight, equalTo(72.5))
     }
 
     class AddressDeserializer : Deserializable<Friend.Address> {
 
         override fun deserialize(json: JSON): DeserializedResult<Friend.Address> =
-                ::Address.create.
-                        map(json at "street").
-                        apply(json at "suite").
-                        apply(json at "city")
-
+            ::Address.create
+                .map(json at "street")
+                .apply(json at "suite")
+                .apply(json at "city")
     }
 
     class FriendDeserializer : Deserializable<Friend> {
         override fun deserialize(json: JSON): DeserializedResult<Friend> =
-                ::Friend.create.
-                        map(json at "id").
-                        apply(json at "name").
-                        apply(json.at("address", AddressDeserializer()::deserialize))
+            ::Friend.create
+                .map(json at "id")
+                .apply(json at "name")
+                .apply(json.at("address", AddressDeserializer()::deserialize))
     }
-
 
     class UserWithFriendsDeserializer : Deserializable<UserWithFriends> {
         override fun deserialize(json: JSON): DeserializedResult<UserWithFriends> =
-                ::UserWithFriends.create.
-                        map(json at "id").
-                        apply(json at "name").
-                        apply(json at "age").
-                        apply(json at "email").
-                        apply(json.list("friends", FriendDeserializer()::deserialize))
+            ::UserWithFriends.create
+                .map(json at "id")
+                .apply(json at "name")
+                .apply(json at "age")
+                .apply(json at "email")
+                .apply(json.list("friends", FriendDeserializer()::deserialize))
     }
 
     @Test
     fun testUserWithFriendsDeserializing() {
         val results = Forge.modelFromJson(userFriendsJson, UserWithFriendsDeserializer())
-        val user = results.get<UserWithFriends>()
+        val user = results.get()
 
         assertThat(user, notNullValue())
         assertThat(user.friends.size, equalTo(3))
@@ -237,5 +235,4 @@ class JSONMappingObjectTest : BaseTest() {
         assertThat(third.address.street, equalTo("Douglas Extension"))
         assertThat(third.address.suite, equalTo("Suite 847"))
     }
-
 }
